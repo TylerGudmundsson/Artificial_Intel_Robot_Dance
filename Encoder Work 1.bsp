@@ -1,0 +1,95 @@
+'{$STAMP BS2p}
+'{$PBASIC 2.5}
+CHL VAR Nib
+CHR VAR Nib
+ADCL VAR Word
+ADCR VAR Word
+CNTL VAR Byte
+CNTR VAR Byte
+CNTL = 0
+CNTR = 0
+
+Main:
+
+DO UNTIL((CNTL > 13) & (CNTL > 13))
+  GOSUB Encoder_readR
+  GOSUB Encoder_readL
+  IF (CNTL > 13)THEN
+    GOSUB OffL
+  ENDIF
+  IF (CNTR > 13)THEN
+    GOSUB OffR
+  ENDIF
+
+LOOP
+
+DO WHILE ((CNTL > 13)& (CNTR > 13))
+  GOSUB Off
+
+LOOP
+
+
+Encoder_readL:
+
+    GOSUB Forward
+    CHL = 6 : GOSUB RD_ADCL 'Read ADC Analog0
+    'CHR = 7 : GOSUB RD_ADCR
+
+      DEBUG 2,2,1,"ADC Value L",DEC4 ADCL 'Show On Debug Terminal
+      'DEBUG 2,2,1,"ADC Value R",DEC4 ADCR
+      IF (ADCL > 500) THEN 'Check White ?
+        DO 'Loop Here
+         CHL = 6 : GOSUB RD_ADCL 'Read Again
+         DEBUG 2,2,1,"ADC Value L ",DEC4 ADCL 'Show On Debug Terminal
+         'CHR = 7 : GOSUB RD_ADCR
+         'DEBUG 2,2,1,"ADC Value R",DEC4 ADCR
+       LOOP UNTIL (ADCL < 250) 'Loop Until Found Black
+       CNTL =CNTL+1 'When White and Black Increment Counte
+       'CNTR =CNTR+1
+     ENDIF
+    DEBUG 2,2,2, "Counter Value L ",DEC3 CNTL
+    'DEBUG 2,2,2, "Counter Value R ",DEC3 CNTR
+    RETURN
+
+ Encoder_readR:
+
+    GOSUB Forward
+    'CHL = 6 : GOSUB RD_ADCL 'Read ADC Analog0
+    CHR = 7 : GOSUB RD_ADCR
+
+      'DEBUG 2,2,1,"ADC Value L",DEC4 ADCL 'Show On Debug Terminal
+      DEBUG 2,2,1,"ADC Value R",DEC4 ADCR
+      IF (ADCR > 500) THEN 'Check White ?
+        DO 'Loop Here
+         'CHL = 6 : GOSUB RD_ADCL 'Read Again
+         DEBUG 2,2,1,"ADC Value L ",DEC4 ADCL 'Show On Debug Terminal
+         CHR = 7 : GOSUB RD_ADCR
+         DEBUG 2,2,1,"ADC Value R",DEC4 ADCR
+       LOOP UNTIL (ADCR < 250) 'Loop Until Found Black
+       'CNTL =CNTL+1 'When White and Black Increment Counte
+       CNTR =CNTR+1
+     ENDIF
+    'DEBUG 2,2,2, "Counter Value L ",DEC3 CNTL
+    DEBUG 2,2,2, "Counter Value R ",DEC3 CNTR
+    RETURN
+
+
+
+'+++++ Analog to Digital Converter Procedure ++++++++++
+RD_ADCL: LOW 10: PAUSE 2: HIGH 10 'Send Acknowledge
+SEROUT 10,240,[CHL] 'Send Select Chip
+SERIN 10,240,250,Error,[ADCL.BYTE0,ADCL.BYTE1] ' Read ADC
+RETURN
+
+RD_ADCR: LOW 10: PAUSE 2: HIGH 10
+SEROUT 10,240,[CHR] 'Send Select Chip
+SERIN 10,240,250,Error,[ADCR.BYTE0,ADCR.BYTE1] ' Read ADC
+RETURN
+
+Error: DEBUG "Error Reading",CR
+RETURN
+
+Forward: HIGH 13 : LOW 12 : HIGH 15 : LOW 14 : RETURN
+Off: LOW 13 : LOW 12 : LOW 15 : LOW 14 : RETURN
+OffL: LOW 13 : LOW 12 : HIGH 15 : LOW 14 : RETURN
+OffR: HIGH 13 : LOW 12 : LOW 15 : LOW 14 : RETURN

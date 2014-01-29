@@ -1,0 +1,113 @@
+            '{$STAMP BS2p}
+
+'{$PBASIC 2.5}
+CNT1 VAR Byte
+CNT2 VAR Byte
+CH1 VAR Nib
+CH5 VAR Nib
+CH7 VAR Nib
+CH2 VAR Nib
+ CH3 VAR Nib
+ADC VAR Word
+ADC1 VAR Word
+ADC2 VAR Word
+ADC3 VAR Word
+x VAR Word
+y VAR Word
+
+
+DO
+CH1 = 6 : GOSUB RD_ADC1 ' Read data From GP2D120
+     CH2 = 2 : GOSUB RD_ADC2 ' Read data From GP2D120
+    CH3 = 4 : GOSUB RD_ADC3 ' Front
+DO WHILE (ADC3 < 270)
+    CH3 = 4 : GOSUB RD_ADC3 ' Front
+    CH1 = 6 : GOSUB RD_ADC1 ' Read data From GP2D120
+     CH2 = 2 : GOSUB RD_ADC2 ' Read data From GP2D120
+
+IF ((ADC2<270) & (ADC1<270)) THEN
+GOSUB Forward
+  CH3 = 4 : GOSUB RD_ADC3 ' Front
+    CH1 = 6 : GOSUB RD_ADC1 ' Read data From GP2D120
+     CH2 = 2 : GOSUB RD_ADC2 ' Read data From GP2D120
+ENDIF
+IF (ADC2 > 270) THEN
+   GOSUB Motor_OFF
+   GOSUB S_Right
+      CH3 = 4 : GOSUB RD_ADC3 ' Front
+    CH1 = 6 : GOSUB RD_ADC1 ' Read data From GP2D120
+     CH2 = 2 : GOSUB RD_ADC2 ' Read data From GP2D120
+   ENDIF
+  IF (ADC1 > 270) THEN
+    GOSUB Motor_OFF
+  GOSUB S_Left
+     CH3 = 4 : GOSUB RD_ADC3 ' Front
+    CH1 = 6 : GOSUB RD_ADC1 ' Read data From GP2D120
+     CH2 = 2 : GOSUB RD_ADC2 ' Read data From GP2D120
+  ENDIF
+     CH3 = 4 : GOSUB RD_ADC3 ' Front
+    CH1 = 6 : GOSUB RD_ADC1 ' Read data From GP2D120
+     CH2 = 2 : GOSUB RD_ADC2 ' Read data From GP2D120
+LOOP
+DO WHILE (ADC3 > 270)
+
+IF (ADC2 > ADC1) THEN
+DO
+    GOSUB S_Right ' Robot move forward
+
+
+         CH3 = 4 : GOSUB RD_ADC3 ' Front
+
+LOOP UNTIL (ADC3<270)  ' Check counter more than 19 ?
+
+
+       CH3 = 4 : GOSUB RD_ADC3 ' Front
+
+GOSUB Motor_OFF
+'**********************************************************************
+ELSE
+DO
+   GOSUB S_Left ' Robot move forward
+           CH3 = 4 : GOSUB RD_ADC3 ' Front
+
+LOOP UNTIL (ADC3<270) ' Check counter more than 19 ?
+
+
+     CH3 = 4 : GOSUB RD_ADC3 ' Front
+
+GOSUB Motor_OFF ' If yes, stop robot
+
+
+ ENDIF
+ CH3 = 4 : GOSUB RD_ADC3 ' Front
+  LOOP
+  LOOP
+
+
+
+
+RD_ADC1: LOW 10: PAUSE 2: HIGH 10 ' Send Acknowledge
+SEROUT 10,240,[CH1] ' Select Chip
+SERIN 10,240,[ADC1.BYTE0,ADC1.BYTE1] ' Read ADC
+RETURN
+
+RD_ADC2: LOW 10: PAUSE 2: HIGH 10 ' Send Acknowledge
+SEROUT 10,240,[CH2] ' Select Chip
+SERIN 10,240,[ADC2.BYTE0,ADC2.BYTE1] ' Read ADC
+RETURN
+
+RD_ADC3: LOW 10: PAUSE 2: HIGH 10 ' Send Acknowledge
+SEROUT 10,240,[CH3] ' Select Chip
+SERIN 10,240,[ADC3.BYTE0,ADC3.BYTE1] ' Read ADC
+RETURN
+
+
+Forward: HIGH 13 : LOW 12 : HIGH 15 : LOW 14 : RETURN
+Backward: HIGH 12 : LOW 13 : HIGH 14 : LOW 15 : RETURN
+T_Left: HIGH 13 : LOW 12 : LOW 15 : LOW 14 : RETURN
+T_Right: LOW 13 : LOW 12 : HIGH 15 : LOW 14 : RETURN
+S_Left: HIGH 13 : LOW 12 : HIGH 14 : LOW 15 : RETURN
+S_Right: HIGH 12 : LOW 13 : HIGH 15 : LOW 14 : RETURN
+Motor_OFF: LOW 13 : LOW 12 : LOW 15 : LOW 14 : RETURN
+T_Leftb: HIGH 14 : LOW 13 : LOW 15 : LOW 12 : RETURN
+ P_Left: HIGH 14 : LOW 13 : LOW 12 : LOW 15 : RETURN

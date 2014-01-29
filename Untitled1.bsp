@@ -1,0 +1,160 @@
+'{$STAMP BS2p}
+'{$PBASIC 2.5}
+
+ADC1 VAR Word
+ADC2 VAR Word
+CH3 VAR Byte
+CH5 VAR Byte
+CNT1 VAR Byte
+CNT2 VAR Byte
+CNT1 = 0 ' Clear counter
+CNT2 = 0
+PAUSE 1000
+GOSUB Forward ' Robot move forward
+DO
+GOSUB Forward ' Robot move forward
+CH3 = 3 ' Select ANALOG3
+GOSUB RD_ADC1 ' Read data from ADC
+DEBUG CLS,"LEFT SENSOR = ", DEC ADC1 , TAB ' Show data on Debug Terminal
+CH5 = 5 ' Select ANALOG5
+GOSUB RD_ADC2 ' Read data from ADC
+DEBUG "RIGHT SENSOR = ", DEC ADC2 , TAB ' Show data on Debug Terminal
+IF ((ADC1 < 40) & (ADC2 < 40)) THEN ' Check hold or reflect
+  DEBUG DEC CNT1
+  DEBUG DEC CNT2
+  DO ' If Hold,
+  CH3 = 3 ' Select ANALOG3
+  GOSUB RD_ADC1 ' Read data from ADC
+  DEBUG CLS,"LEFT SENSOR = ", DEC ADC1 , TAB ' Show data on Debug Terminal
+  CH5 = 5 ' Select ANALOG5
+  GOSUB RD_ADC2 ' Read data from ADC
+  DEBUG "RIGHT SENSOR = ", DEC ADC2 , TAB ' Show data on Debug Terminal
+  LOOP UNTIL ((ADC1 > 40)   &   (ADC2 > 40)) ' Wait until reflect
+  CNT1 = CNT1 + 1
+  CNT2 = CNT2 + 1 ' Increment counter
+  GOSUB T_Right
+  PAUSE 120
+
+ENDIF
+LOOP UNTIL ((CNT1 > 5) | (CNT2 > 5)) ' Check counter more than 19 ?
+   DEBUG DEC CNT1, TAB
+   DEBUG DEC CNT2, TAB
+GOSUB Motor_OFF ' If yes, stop robot
+
+'**********************************************************************************
+CNT1=0
+CNT2=0
+PAUSE 1000
+GOSUB T_Right ' Robot move forward
+DO
+CH3 = 3 ' Select ANALOG3
+GOSUB RD_ADC1 ' Read data from ADC
+DEBUG CLS,"LEFT SENSOR = ", DEC ADC1 , TAB ' Show data on Debug Terminal
+CH5 = 5 ' Select ANALOG5
+GOSUB RD_ADC2 ' Read data from ADC
+DEBUG "RIGHT SENSOR = ", DEC ADC2 , TAB ' Show data on Debug Terminal
+IF (ADC1 < 40) THEN ' Check hold or reflect
+  DEBUG DEC CNT1, TAB
+
+  DO ' If Hold,
+  CH3 = 3 ' Select ANALOG3
+  GOSUB RD_ADC1 ' Read data from ADC
+  DEBUG CLS,"LEFT SENSOR = ", DEC ADC1 , TAB ' Show data on Debug Terminal
+
+  LOOP UNTIL (ADC1 > 40) ' Wait until reflect
+  CNT1 = CNT1 + 1
+  DEBUG DEC CNT1, TAB
+
+
+ENDIF
+LOOP UNTIL (CNT1 > 5) ' Check counter more than 19 ?
+   DEBUG DEC CNT1, TAB
+
+
+GOSUB P_Left : PAUSE 50 ' Brake motor
+GOSUB Motor_OFF ' If yes, stop robot
+DEBUG DEC CNT1
+'*********************************************************************************
+  FREQOUT 11,200,C
+PAUSE 500
+FREQOUT 11,200,D
+PAUSE 250
+FREQOUT 11,200,D
+PAUSE 500
+FREQOUT 11,200,C
+PAUSE 250
+FREQOUT 11,200,C
+PAUSE 500
+FREQOUT 11,200,D
+PAUSE 1000
+'**************************************************************************************
+
+ CNT1 = 0 ' Clear counter
+CNT2 = 0
+PAUSE 1000
+GOSUB Backward ' Robot move forward
+DO
+GOSUB Backward ' Robot move forward
+CH3 = 3 ' Select ANALOG3
+GOSUB RD_ADC1 ' Read data from ADC
+DEBUG CLS,"LEFT SENSOR = ", DEC ADC1 , TAB ' Show data on Debug Terminal
+CH5 = 5 ' Select ANALOG5
+GOSUB RD_ADC2 ' Read data from ADC
+DEBUG "RIGHT SENSOR = ", DEC ADC2 , TAB ' Show data on Debug Terminal
+IF ((ADC1 < 40) & (ADC2 < 40)) THEN ' Check hold or reflect
+  DEBUG DEC CNT1
+  DEBUG DEC CNT2
+  DO ' If Hold,
+  CH3 = 3 ' Select ANALOG3
+  GOSUB RD_ADC1 ' Read data from ADC
+  DEBUG CLS,"LEFT SENSOR = ", DEC ADC1 , TAB ' Show data on Debug Terminal
+  CH5 = 5 ' Select ANALOG5
+  GOSUB RD_ADC2 ' Read data from ADC
+  DEBUG "RIGHT SENSOR = ", DEC ADC2 , TAB ' Show data on Debug Terminal
+  LOOP UNTIL ((ADC1 > 40)   &   (ADC2 > 40)) ' Wait until reflect
+  CNT1 = CNT1 + 1
+  CNT2 = CNT2 + 1 ' Increment counter
+  IF (CNT1<5)THEN
+  GOSUB T_Leftb
+  PAUSE 120
+   ENDIF
+ENDIF
+LOOP UNTIL ((CNT1 > 5) | (CNT2 > 5)) ' Check counter more than 19 ?
+   DEBUG DEC CNT1, TAB
+   DEBUG DEC CNT2, TAB
+GOSUB Motor_OFF ' If yes, stop robot
+
+
+'*************************************************************************************
+
+C CON 566 ' C7 note 2093.00/3.7 = 566
+D CON 635 ' D7 note 2349.32/3.7 = 635
+E CON 713 ' E7 note 2637.02/3.7 = 713
+F CON 755 ' F7 note 2793.83/3.7 = 755
+G CON 848 ' G7 note 3135.96/3.7 = 848
+
+'+++++ Analog to Digital Converter Procedure ++++++++++
+RD_ADC1: LOW 10: PAUSE 2: HIGH 10 ' Send acknowledge
+SEROUT 10,240,[CH3] ' Select channel
+SERIN 10,240,250,Error,[ADC1.BYTE0,ADC1.BYTE1] ' Read ADC
+RETURN
+Error: DEBUG "Error Reading",CR
+RETURN
+
+RD_ADC2: LOW 10: PAUSE 2: HIGH 10 ' Send acknowledge
+SEROUT 10,240,[CH5] ' Select channel
+SERIN 10,240,250,Error,[ADC2.BYTE0,ADC2.BYTE1] ' Read ADC
+RETURN
+Error2: DEBUG "Error Reading",CR
+RETURN
+
+
+Forward: HIGH 13 : LOW 12 : HIGH 15 : LOW 14 : RETURN
+Backward: HIGH 12 : LOW 13 : HIGH 14 : LOW 15 : RETURN
+T_Left: HIGH 13 : LOW 12 : LOW 15 : LOW 14 : RETURN
+T_Right: LOW 13 : LOW 12 : HIGH 15 : LOW 14 : RETURN
+S_Left: HIGH 13 : LOW 12 : HIGH 14 : LOW 15 : RETURN
+S_Right: HIGH 12 : LOW 13 : HIGH 15 : LOW 14 : RETURN
+Motor_OFF: LOW 13 : LOW 12 : LOW 15 : LOW 14 : RETURN
+T_Leftb: HIGH 14 : LOW 13 : LOW 15 : LOW 12 : RETURN
+ P_Left: HIGH 14 : LOW 13 : LOW 12 : LOW 15 : RETURN
